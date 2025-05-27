@@ -1,18 +1,21 @@
 from threading import Lock, Thread
-import time
 
-class Singleton:
-    _instance = None
-    _lock = Lock()
 
+class SingletonMeta(type):
+    _instances = {}
+
+    _lock: Lock = Lock()
+
+    def __call__(cls, *args, **kwargs):
+        with cls._lock:
+            if cls not in cls._instances:
+                instance = super().__call__(*args, **kwargs)
+                cls._instances[cls] = instance
+        return cls._instances[cls]
+
+
+class Singleton(metaclass=SingletonMeta):
     value: str = None
-
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            with cls._lock:
-                if not cls._instance:
-                    cls._instance = super().__new__(cls)
-        return cls._instance
 
     def __init__(self, value: str) -> None:
         self.value = value
@@ -22,7 +25,7 @@ class Singleton:
 
 def run_singleton(value: str) -> None:
     singleton = Singleton(value)
-    print(singleton.value, id(singleton))
+    print(singleton.value, Singleton._instances)
 
 
 if __name__ == "__main__":
